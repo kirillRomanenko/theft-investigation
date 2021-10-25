@@ -53,6 +53,8 @@ function createReport(hash, btcValue, time){
 async function getValueBlock(){
     try {
         const response = await axios.get('https://blockchain.info/rawblock/705805');
+        const response2 = await axios.get('https://blockchain.info/latestblock');
+        const latestNumberBlock = response2.data.block_index;
         const txLength = response.data.tx.length; // количество транзакций
         let attentionPrice = [];
         for (let i = 0; i < txLength; i++) {
@@ -67,6 +69,7 @@ async function getValueBlock(){
             
         }
         console.log(attentionPrice);
+        console.log(latestNumberBlock);
         // console.log(response.data.tx[1].out[0].value);
         // console.log(response.data.tx.length);
         // console.log(response.data.tx[2].out.length);
@@ -75,15 +78,3 @@ async function getValueBlock(){
     }
 }
 getValueBlock();
-
-async function getNumberLatestBlock(){
-    try {
-        const response = await axios.get('https://blockchain.info/latestblock');
-        // console.log(response.data.block_index);
-        const latestNumberBlock = response.data.block_index;
-        const startNumberBlock = 705805;
-    } catch (error) {
-        console.log(error);
-    }
-}
-// getNumberLatestBlock();
