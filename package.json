@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/kirillRomanenko/theft-investigation#readme",
   "dependencies": {
-    "axios": "^0.23.0"
+    "axios": "^0.23.0",
+    "excel4node": "^1.7.2"
   }
 }
