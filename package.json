@@ -18,6 +18,7 @@
   "homepage": "https://github.com/kirillRomanenko/theft-investigation#readme",
   "dependencies": {
     "axios": "^0.23.0",
-    "excel4node": "^1.7.2"
+    "excel4node": "^1.7.2",
+    "moment-timezone": "^0.5.33"
   }
 }
