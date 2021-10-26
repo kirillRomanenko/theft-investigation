@@ -1,10 +1,10 @@
 const axios = require('axios');
 const xl = require('excel4node');
 const moment = require('moment-timezone');
-
-function createReport(hash, btcValue, time, numberBlock){
-    const wb = new xl.Workbook();
-    const ws = wb.addWorksheet('Sheet 1');
+const wb = new xl.Workbook();
+function createReport(hash, btcValue, time, numberBlock, idBlock){
+    // const wb = new xl.Workbook();
+    const ws = wb.addWorksheet(idBlock);
     const styleHeader = wb.createStyle({
         font: {
             bold: true,
@@ -28,10 +28,10 @@ function createReport(hash, btcValue, time, numberBlock){
     ws.cell(1, 2) //B1
       .string('BTC value')
       .style(styleHeader);
-    ws.cell(1, 3) //C1
-      .string('Time')
-      .style(styleHeader);
-    ws.cell(1, 4) //D1
+    // ws.cell(1, 3) //C1
+    //   .string('Time')
+    //   .style(styleHeader);
+    ws.cell(1, 3) //D1
       .string('Number block')
       .style(styleHeader);
     
@@ -45,66 +45,67 @@ function createReport(hash, btcValue, time, numberBlock){
         .string(btcValue[i])
         .style(style);
         
-        ws.cell(i+2, 3) //C
-        .string(time[i])
-        .style(style);
+        // ws.cell(i+2, 3) //C
+        // .string(time[i])
+        // .style(style);
         
-        ws.cell(i+2, 4) //D
+        ws.cell(i+2, 3) //D
         .string(numberBlock[i])
         .style(style);
         
     }
     
-    wb.write('Excel.xlsx');
+    wb.write('./Reports/Report.xlsx');
 }
 
-async function getValueBlock(idBlock){
+async function getValueBlock(){
     try {
-        const response = await axios.get('https://blockchain.info/rawblock/' + idBlock);
-        // const response2 = await axios.get('https://blockchain.info/latestblock');
-        // const latestNumberBlock = response2.data.block_index;
-        const txLength = response.data.tx.length; // количество транзакций
-        let attentionPrice = [];
-        let hash = [];
-        let time = [];
-        let numberBlock = [];
-        for (let i = 0; i < txLength; i++) {
-            let countOutAddr = response.data.tx[i].out.length; // количество адресов назначения перевода
-            let price = 0;
-            for (let j = 0; j < countOutAddr; j++) {
-                price += response.data.tx[i].out[j].value;
-                if (price >= 5000000000) {
-                    hash.push(response.data.tx[i].hash); // хэш транзакции
-                    attentionPrice.push(String(price)); // сумма
-                    // let timestamp = moment.(response.data.tx[i].time);
-                    let timestamp = moment.tz(response.data.tx[i].time, "Europe/Moscow");
-                    // let MoscowTime = timestamp.tz('Europe/Moscow').format('D MMM Y HH:mm:ss');
-                    time.push(timestamp);
-                    numberBlock.push(String(response.data.block_index));
+        const response2 = await axios.get('https://blockchain.info/latestblock');
+        const latestNumberBlock = response2.data.height;
+        for (let idBlock = 705052; idBlock < latestNumberBlock; idBlock++) {
+            const response = await axios.get('https://blockchain.info/rawblock/' + idBlock);
+        
+            const txLength = response.data.tx.length; // количество транзакций
+            let attentionPrice = [];
+            let hash = [];
+            let time = [];
+            let numberBlock = [];
+            for (let i = 0; i < txLength; i++) {
+                let countOutAddr = response.data.tx[i].out.length; // количество адресов назначения перевода
+                let price = 0;
+                for (let j = 0; j < countOutAddr; j++) {
+                    price += response.data.tx[i].out[j].value;
+                    if (price >= 8500000000) {
+                        hash.push(response.data.tx[i].hash); // хэш транзакции
+                        attentionPrice.push(String(price)); // сумма
+                        // let timestamp = moment.(response.data.tx[i].time);
+                        let timestamp = moment.tz(response.data.tx[i].time, "Europe/Moscow");
+                        // let MoscowTime = timestamp.tz('Europe/Moscow').format('D MMM Y HH:mm:ss');
+                        time.push(timestamp);
+                        numberBlock.push(String(response.data.block_index));
+                    }
                 }
+                
             }
+            createReport(hash, attentionPrice, time, numberBlock, idBlock);
             
         }
-        createReport(hash, attentionPrice, time, numberBlock);
-        console.log(attentionPrice);
-        // console.log(latestNumberBlock);
-        console.log(hash);
-        console.log(time);
+        
     } catch (error) {
         console.log(error);
     }
 }
-async function getAllBlocks(){
-    try {
-        const response = await axios.get('https://blockchain.info/latestblock');
-        const latestNumberBlock = response.data.height;
-        for (let i = 705805; i <= 705807; i++) {
-            getValueBlock(i);
+// async function getAllBlocks(){
+//     try {
+//         const response = await axios.get('https://blockchain.info/latestblock');
+//         const latestNumberBlock = response.data.height;
+//         for (let i = 705805; i <= 705807; i++) {
+//             getValueBlock(i);
             
-        }
-    } catch (error) {
-        console.log(error);
-    }
-}
-getAllBlocks();
-
+//         }
+//     } catch (error) {
+//         console.log(error);
+//     }
+// }
+// getAllBlocks();
+getValueBlock();
