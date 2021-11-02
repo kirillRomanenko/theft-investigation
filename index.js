@@ -1,6 +1,36 @@
 const axios = require('axios');
 const xl = require('excel4node');
 const moment = require('moment-timezone');
+const { MongoClient } = require('mongodb');
+const readlineSync = require('readline-sync');
+
+// Connection URL
+const url = 'mongodb://localhost:27017';
+const client = new MongoClient(url);
+
+// Database Name
+const dbName = 'theft-investigation';
+
+async function insertDb(idBlock, hash, attentionPrice) {
+    // Use connect method to connect to the server
+    await client.connect();
+    console.log('Connected successfully to server');
+    const db = client.db(dbName);
+    const collection = db.collection('theft-investigation');
+  
+    // the following code examples can be pasted here...
+    // const insertResult = await collection.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);
+    // const insertResult = await collection.insertOne({_id:1,name1:1,name2:2});
+    // console.log('Inserted documents =>', insertResult);
+    const insertResult = await collection.insertOne({_id:idBlock,Hash:hash,AttentionPrice:attentionPrice});
+  
+    return 'done.';
+  }
+//   insertDb()
+//   .then(console.log)
+//   .catch(console.error)
+//   .finally(() => client.close());
+
 const wb = new xl.Workbook();
 function createReport(hash, btcValue, time, numberBlock, idBlock){
     // const wb = new xl.Workbook();
@@ -58,11 +88,11 @@ function createReport(hash, btcValue, time, numberBlock, idBlock){
     wb.write('./Reports/Report.xlsx');
 }
 
-async function getValueBlock(){
+async function getValueBlock(startBlock, startBtc){
     try {
         const response2 = await axios.get('https://blockchain.info/latestblock');
         const latestNumberBlock = response2.data.height;
-        for (let idBlock = 705052; idBlock < latestNumberBlock; idBlock++) {
+        for (let idBlock = startBlock; idBlock < latestNumberBlock; idBlock++) {
             const response = await axios.get('https://blockchain.info/rawblock/' + idBlock);
         
             const txLength = response.data.tx.length; // количество транзакций
@@ -75,7 +105,7 @@ async function getValueBlock(){
                 let price = 0;
                 for (let j = 0; j < countOutAddr; j++) {
                     price += response.data.tx[i].out[j].value;
-                    if (price >= 8500000000) {
+                    if (price >= startBtc) {
                         hash.push(response.data.tx[i].hash); // хэш транзакции
                         attentionPrice.push(String(price)); // сумма
                         // let timestamp = moment.(response.data.tx[i].time);
@@ -87,7 +117,11 @@ async function getValueBlock(){
                 }
                 
             }
-            createReport(hash, attentionPrice, time, numberBlock, idBlock);
+            // createReport(hash, attentionPrice, time, numberBlock, idBlock);
+            insertDb(idBlock, hash,attentionPrice)
+                .then(console.log)
+                .catch(console.error)
+                .finally(() => client.close());
             
         }
         
@@ -95,17 +129,6 @@ async function getValueBlock(){
         console.log(error);
     }
 }
-// async function getAllBlocks(){
-//     try {
-//         const response = await axios.get('https://blockchain.info/latestblock');
-//         const latestNumberBlock = response.data.height;
-//         for (let i = 705805; i <= 705807; i++) {
-//             getValueBlock(i);
-            
-//         }
-//     } catch (error) {
-//         console.log(error);
-//     }
-// }
-// getAllBlocks();
-getValueBlock();
+const startBlock = Number(readlineSync.question('Введите номер начального блока: '));
+const startBtc = Number(readlineSync.question('Введите стартовую сумму BTC с 8 знаками (85 BTC = 8500000000): '));
+getValueBlock(startBlock, startBtc);
