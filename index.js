@@ -4,33 +4,6 @@ const moment = require('moment-timezone');
 const { MongoClient } = require('mongodb');
 const readlineSync = require('readline-sync');
 
-// Connection URL
-const url = 'mongodb://localhost:27017';
-const client = new MongoClient(url);
-
-// Database Name
-const dbName = 'theft-investigation';
-
-async function insertDb(idBlock, hash, attentionPrice) {
-    // Use connect method to connect to the server
-    await client.connect();
-    console.log('Connected successfully to server');
-    const db = client.db(dbName);
-    const collection = db.collection('theft-investigation');
-  
-    // the following code examples can be pasted here...
-    // const insertResult = await collection.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);
-    // const insertResult = await collection.insertOne({_id:1,name1:1,name2:2});
-    // console.log('Inserted documents =>', insertResult);
-    const insertResult = await collection.insertOne({_id:idBlock,Hash:hash,AttentionPrice:attentionPrice});
-  
-    return 'done.';
-  }
-//   insertDb()
-//   .then(console.log)
-//   .catch(console.error)
-//   .finally(() => client.close());
-
 const wb = new xl.Workbook();
 function createReport(hash, btcValue, time, numberBlock, idBlock){
     // const wb = new xl.Workbook();
@@ -88,6 +61,46 @@ function createReport(hash, btcValue, time, numberBlock, idBlock){
     wb.write('./Reports/Report.xlsx');
 }
 
+// Connection URL
+const url = 'mongodb://localhost:27017';
+const client = new MongoClient(url);
+
+// Database Name
+const dbName = 'theft-investigation';
+
+async function insertDb(idBlock, hash, attentionPrice) {
+    // Use connect method to connect to the server
+    await client.connect();
+    console.log('Connected successfully to server');
+    const db = client.db(dbName);
+    const collection = db.collection('theft-investigation');
+  
+    // the following code examples can be pasted here...
+    // const insertResult = await collection.insertMany([{ a: 1 }, { a: 2 }, { a: 3 }]);
+    // const insertResult = await collection.insertOne({_id:1,name1:1,name2:2});
+    // console.log('Inserted documents =>', insertResult);
+    const insertResult = await collection.insertOne({_id:idBlock,Hash:hash,AttentionPrice:attentionPrice});
+  
+    return 'done.';
+  }
+
+async function findDb(){
+    await client.connect();
+    console.log('Connected successfully to server');
+    const db = client.db(dbName);
+    const collection = db.collection('theft-investigation');
+
+    const findResult = await collection.find({}).toArray();
+    // console.log('Found documents =>', findResult[0]._id);
+}
+findDb()
+    .then(console.log)
+    .catch(console.error)
+    .finally(() => client.close());
+
+
+
+
 async function getValueBlock(startBlock, startBtc){
     try {
         const response2 = await axios.get('https://blockchain.info/latestblock');
@@ -129,6 +142,6 @@ async function getValueBlock(startBlock, startBtc){
         console.log(error);
     }
 }
-const startBlock = Number(readlineSync.question('Введите номер начального блока: '));
-const startBtc = Number(readlineSync.question('Введите стартовую сумму BTC с 8 знаками (85 BTC = 8500000000): '));
-getValueBlock(startBlock, startBtc);
+// const startBlock = Number(readlineSync.question('Введите номер начального блока: '));
+// const startBtc = Number(readlineSync.question('Введите стартовую сумму BTC с 8 знаками (85 BTC = 8500000000): '));
+// getValueBlock(startBlock, startBtc);
